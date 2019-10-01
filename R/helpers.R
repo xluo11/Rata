@@ -159,33 +159,10 @@ ata_get_obj_coef <- function(x, coef, compensate){
     coef <- aggregate(coef, by=list(group=unlist(x$groups)), sum, na.rm=TRUE)[,-1]
     coef <- matrix(coef, nrow=1)
   } else if(is.numeric(coef)) { # a vector of theta points where TIFs are controlled
-    if(nrow(x$pool$'3pl') > 0) {
-      info_3pl <- with(x$pool$'3pl', model_3pl_info(coef, a, b, c, D=x$opts$D_3pl))
-      info_3pl <- aggregate(t(info_3pl), by=list(group=x$groups$'3pl'), sum, na.rm=TRUE)
-      info_3pl <- t(info_3pl[,-1,drop=FALSE])
-    } else {
-      info_3pl <- numeric(0)
-    }
-    if(nrow(x$pool$'gpcm') > 0) {
-      d <- as.matrix(x$pool$'gpcm'[, grep('^d[0-9]+$', colnames(x$pool$'gpcm'), value=TRUE)])
-      info_gpcm <- with(x$pool$'gpcm', model_gpcm_info(coef, a, b, d, D=x$opts$D_gpcm))
-      info_gpcm <- apply(info_gpcm, 1, rowSums, na.rm=TRUE)
-      info_gpcm <- aggregate(info_gpcm, by=list(group=x$groups$'gpcm'), sum, na.rm=TRUE)
-      info_gpcm <- t(info_gpcm[,-1])
-    } else {
-      info_gpcm <- numeric(0)
-    }
-    if(nrow(x$pool$'grm') > 0) {
-      b <- grep('^b[0-9]+$', colnames(x$pool$'grm'))
-      b <- as.matrix(x$pool$'grm'[, b])
-      info_grm <- model_grm_info(coef, x$pool$'grm'$a, b, D=x$opts$D_grm)
-      info_grm <- apply(info_grm, 1, rowSums, na.rm=TRUE)
-      info_grm <- aggregate(info_grm, by=list(group=x$groups$'grm'), sum, na.rm=TRUE)
-      info_grm <- t(info_grm[,-1])
-    } else {
-      info_grm <- numeric(0)
-    }
-    coef <- cbind(info_3pl, info_gpcm, info_grm)
+    pool <- Map(function(x) if(nrow(x)==0) NULL else x, x$pool)
+    coef <- model_mixed_info(coef, pool, D=x$opts$D)
+    coef <- aggregate(t(coef), by=list(group=unlist(x$groups)), sum, na.rm=TRUE)
+    coef <- t(coef[,-1,drop=FALSE])
   } else if(is.character(coef)) { # a variable name
     coef <- Map(function(x, g) {
       if(nrow(x) == 0)

@@ -1,8 +1,8 @@
 Package: Rata
 Type: Package
 Title: Automated Test Assembly
-Version: 0.0.1
-Date: 2019-09-01
+Version: 0.0.2
+Date: 2019-09-25
 Authors@R: c(person("Xiao", "Luo", role=c("aut","cre"), email="xluo1986@gmail.com"))
 Author: Xiao Luo [aut, cre]
 Maintainer: Xiao Luo <xluo1986@gmail.com>
@@ -18,7 +18,7 @@ Imports:
     ggplot2,
     glpkAPI,
     lpSolveAPI,
-    Rirt,
+    Rirt (>= 0.0.2),
     reshape2,
     stats
 Suggests:

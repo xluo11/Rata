@@ -32,7 +32,7 @@ ata_item_enemy(x, items)
 
 ata_item_fix(x, items, min = NA, max = NA, forms)
 
-ata_solve(x, solver = c("lpsolve", "glpk"), item_format = c("model",
+ata_solve(x, solver = c("lpsolve", "glpk"), return_format = c("model",
   "form", "simple"), silent = FALSE, time_limit = 10,
   message = FALSE, ...)
 
@@ -85,7 +85,7 @@ ata_solve(x, solver = c("lpsolve", "glpk"), item_format = c("model",
 
 \item{solver}{use 'lpsolve' for lp_solve 5.5 or 'glpk' for GLPK}
 
-\item{item_format}{the format of the results: use \code{'form'} to organize results in a list of forms,
+\item{return_format}{the format of the results: use \code{'form'} to organize results in a list of forms,
 \code{'model'} to organize results in a list of models, use \code{'simple'} to organize results in
 data.frame after removing item paraemters.}
 
@@ -148,7 +148,6 @@ function, \code{result} the assembly results in a binary matrix, and
 \code{items} the assembled items
 }
 \examples{
-\donttest{
 ## generate a pool of 100 items
 library(Rirt)
 n_items <- 100
@@ -160,10 +159,11 @@ pool$group <- sort(sample(1:round(n_items/3), n_items, replace=TRUE))
 ## ex. 1: four 10-item forms, maximize b parameter
 x <- ata(pool, 4, test_len=10, max_use=1)
 x <- ata_relative_objective(x, "b", "max")
-x <- ata_solve(x, time_limit=5)
+x <- ata_solve(x, time_limit=2)
 with(x$items$'3pl', aggregate(b, by=list(form=form), mean))
 with(x$items$'3pl', table(form))
 
+\donttest{
 ## ex. 2: four 10-item forms, minimize b parameter
 x <- ata(pool, 4, test_len=10, max_use=1)
 x <- ata_relative_objective(x, "b", "min", negative=TRUE)
@@ -172,15 +172,15 @@ with(x$items$'3pl', aggregate(b, by=list(form=form), mean))
 with(x$items$'3pl', table(form))
 
 ## ex. 3: two 10-item forms, mean(b)=0, sd(b)=1
-## content = (3, 3, 4), avg. time = 58--62 seconds
+## content = (3, 3, 4), avg. time = 55--65 seconds
 constr <- data.frame(name='content',level=1:3, min=c(3,3,4), max=c(3,3,4), stringsAsFactors=FALSE)
-constr <- rbind(constr, c('time', NA, 58*10, 62*10))
+constr <- rbind(constr, c('time', NA, 55*10, 65*10))
 x <- ata(pool, 2, test_len=10, max_use=1)
-x <- ata_absolute_objective(x, pool$b, 0*10)
-x <- ata_absolute_objective(x, (pool$b-0)^2, 1*10)
+x <- ata_absolute_objective(x, pool$b, target=0*10)
+x <- ata_absolute_objective(x, (pool$b-0)^2, target=1*10)
 for(i in 1:nrow(constr))
   x <- with(constr, ata_constraint(x, name[i], min[i], max[i], level=level[i]))
-x <- ata_solve(x, time_limit=5)
+x <- ata_solve(x)
 with(x$items$'3pl', aggregate(b, by=list(form=form), mean))
 with(x$items$'3pl', aggregate(b, by=list(form=form), sd))
 with(x$items$'3pl', aggregate(time, by=list(form=form), mean))

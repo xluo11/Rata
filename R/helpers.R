@@ -9,24 +9,20 @@ NULL
 #' @param pool the item pool, a list of 3pl, gpcm, and grm items
 #' @keywords internal
 ata_check_item_pool <- function(pool){
+  if(!is.list(pool))
+    stop('pool needs to be a list of 3pl, gpcm, and/or grm items')
+
   x <- list()
 
-  # if pool is not a list, assume it's 3pl item pool
-  if(is.data.frame(pool) || is.matrix(pool))
-    pool <- list('3pl'=as.data.frame(pool, stringsAsFactors=FALSE))
-
   # check a, b, c paramters for 3PL items
-  if("3pl" %in% names(pool) && nrow(pool$'3pl') > 0) {
+  if("3pl" %in% names(pool) && !is.null(pool$'3pl')) {
     x$'3pl' <- as.data.frame(pool$'3pl', stringsAsFactors=FALSE)
-    if(!'a' %in% colnames(pool$'3pl'))
-      if(!all(c('a', 'b', 'c') %in% colnames(pool$'3pl')))
-        warning('a-, b-, and c-parameters are not all found in the 3PL items')
-  } else {
-    x$'3pl' <- data.frame()
+    if(!all(c('a', 'b', 'c') %in% colnames(pool$'3pl')))
+      warning('a-, b-, and c-parameters are not all found in the 3PL items')
   }
 
   # check a, b, d paramters for GPCM items
-  if("gpcm" %in% names(pool) && nrow(pool$'gpcm') > 0) {
+  if("gpcm" %in% names(pool) && !is.null(pool$'gpcm')) {
     x$'gpcm' <- as.data.frame(pool$'gpcm', stringsAsFactors=FALSE)
     nc_gpcm <- grep('(d[0-9]{1,2})', colnames(pool$'gpcm'), value=TRUE)
     nc_gpcm <- length(nc_gpcm)
@@ -34,12 +30,10 @@ ata_check_item_pool <- function(pool){
       warning('No d-parameters are found in the GPCM items')
     if(!all(c('a', 'b') %in% colnames(pool$'gpcm')))
       warning('a-, and b-parameters are not all found in the GPCM items')
-  } else {
-    x$'gpcm' <- data.frame()
   }
 
   # check a, b paramters for GRM items
-  if("grm" %in% names(pool) && nrow(pool$'grm') > 0) {
+  if("grm" %in% names(pool) && !is.null(pool$'grm')) {
     x$'grm' <- as.data.frame(pool$'grm', stringsAsFactors=FALSE)
     nc_grm <- grep('(b[0-9]{1,2})', colnames(pool$'grm'), value=TRUE)
     nc_grm <- length(nc_grm)
@@ -47,8 +41,6 @@ ata_check_item_pool <- function(pool){
       warning('No b-parameters are found in the GRM items')
     if(!'a' %in% colnames(pool$'grm'))
       warning('a-parameters are not all found in the GRM items')
-  } else {
-    x$'grm' <- data.frame()
   }
 
   x
@@ -58,44 +50,22 @@ ata_check_item_pool <- function(pool){
 #' @rdname helpers
 #' @description \code{ata_item_set_groups} creates grouping indices for item sets
 #' @param opts the options, a list
-#' @param warn \code{TRUE} to print warning messages
 #' @keywords internal
-ata_item_set_groups <- function(pool, opts, warn=FALSE) {
+ata_item_set_groups <- function(pool, opts) {
   if(is.null(opts$group)){
-    group_3pl <- if(nrow(pool$'3pl') > 0) 1:nrow(pool$'3pl') else integer(0)
-    group_gpcm <- if(nrow(pool$'gpcm') > 0) 1:nrow(pool$'gpcm') else integer(0)
-    group_grm <- if(nrow(pool$'grm') > 0) 1:nrow(pool$'grm') else integer(0)
+    groups <- Map(function(x) if(is.null(x)) integer(0) else 1:nrow(x), pool)
   } else {
-    if(opts$group %in% colnames(pool$'3pl')) {
-      group_3pl <- as.integer(factor(pool$'3pl'[, opts$group]))
-    } else {
-      if(warn)
-        warning("the item-set group variable is not found in the 3pl items")
-      group_3pl <- if(nrow(pool$'3pl') > 0) 1:nrow(pool$'3pl') else integer(0)
-    }
-    if(opts$group %in% colnames(pool$'gpcm')) {
-      group_gpcm <- as.integer(factor(pool$'gpcm'[, opts$group]))
-    } else {
-      if(warn)
-        warning("the item-set group variable is not found in the GPCM items")
-      group_gpcm <- if(nrow(pool$'gpcm') > 0) 1:nrow(pool$'gpcm') else integer(0)
-    }
-    if(opts$group %in% colnames(pool$'grm')) {
-      group_grm <- as.integer(factor(pool$'grm'[, opts$group]))
-    } else {
-      if(warn)
-        warning("the item-set group variable is not found in the GRM items")
-      group_grm <- if(nrow(pool$'grm') > 0) 1:nrow(pool$'grm') else integer(0)
-    }
+    groups <- Map(function(x) {
+      if(!opts$group %in% colnames(x)) {
+        return(if(is.null(x)) integer(0) else 1:nrow(x))
+      }
+      as.integer(factor(x[, opts$group]))
+    }, pool)
   }
 
-  max_3pl <- ifelse(length(group_3pl) == 0, 0, max(group_3pl))
-  max_gpcm <- ifelse(length(group_gpcm) == 0, 0, max(group_gpcm))
-  max_grm <- ifelse(length(group_grm) == 0, 0, max(group_grm))
-  group_gpcm <- group_gpcm + max_3pl
-  group_grm <- group_grm + max_3pl + max_gpcm
-
-  list('3pl'=group_3pl, 'gpcm'=group_gpcm, 'grm'=group_grm)
+  group_max <- sapply(groups, max)
+  group_max <- cumsum(c(0, group_max[-length(group_max)]))
+  Map(function(x, y) x + y, groups, group_max)
 }
 
 
@@ -159,13 +129,12 @@ ata_get_obj_coef <- function(x, coef, compensate){
     coef <- aggregate(coef, by=list(group=unlist(x$groups)), sum, na.rm=TRUE)[,-1]
     coef <- matrix(coef, nrow=1)
   } else if(is.numeric(coef)) { # a vector of theta points where TIFs are controlled
-    pool <- Map(function(x) if(nrow(x)==0) NULL else x, x$pool)
-    coef <- model_mixed_info(coef, pool, D=x$opts$D)
+    coef <- model_mixed_info(coef, x$pool, D=x$opts$D)
     coef <- aggregate(t(coef), by=list(group=unlist(x$groups)), sum, na.rm=TRUE)
     coef <- t(coef[,-1,drop=FALSE])
   } else if(is.character(coef)) { # a variable name
     coef <- Map(function(x, g) {
-      if(nrow(x) == 0)
+      if(is.null(x))
         return(numeric(0))
       coef <- coef[coef %in% colnames(x)]
       aggregate(x[, coef], by=list(group=g), sum, na.rm=TRUE)[, -1, drop=FALSE]
@@ -234,7 +203,7 @@ ata_results_to_model <- function(items) {
 #' @keywords internal
 ata_results_to_dataframe <- function(items) {
   items <- Map(function(x, m) {
-    if(nrow(x) == 0)
+    if(is.null(x))
       return(numeric(0))
     x <- cbind(x, model=m)
     x[, colnames(x)[!grepl('^(a|b[0-9]{0,2}|c|d[0-9]{0,2})$', colnames(x))]]

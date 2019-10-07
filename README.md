@@ -54,14 +54,15 @@ Users would use the following functions to build and solve MIP models:
   - `ata_item_fix`: fix the value of the decision variable in the model
   - `ata_solve`: solve the model using a MIP solver. Rata currently
     supports lp\_solve and GLPK
+  - `plot`: plot the TIF of the assembled test forms
 
 ## Usage
 
-Write a helper function for generating item pools which will be used in
-following examples. By default, the pool includes 200 3PL items, 20 GPCM
-items, and 20 GRM items. Each item has a categorical item attribute
-(content area) and a continuous attribute (response time). In addition,
-items are randomly grouped to form item sets.
+First, we write a helper function for generating item pools which is
+used in following examples. By default, the pool includes 300 3PL items,
+20 GPCM items, and 20 GRM items. Each item has a categorical item
+attribute (content area) and a continuous attribute (response time). In
+addition, items are randomly grouped to form item sets.
 
 ``` r
 library(Rirt)
@@ -70,12 +71,12 @@ library(dplyr, warn.conflicts=FALSE)
 item_pool <- function(types=c('3pl', 'gpcm', 'grm'), n_3pl=300, n_gpcm=20, n_grm=20, seed=21578) {
   set.seed(seed)
   items <- model_mixed_gendata(1, n_3pl, n_gpcm, n_grm, n_c=4)$items
-  items$'3pl' <- cbind(items$'3pl', id=seq(n_3pl), content=sample(3, n_3pl, replace=T),
-                       time=round(rlnorm(n_3pl, 4, .38)), group=sort(sample(n_3pl/2, n_3pl, replace=T)))
-  items$'gpcm' <- cbind(items$'gpcm', id=seq(n_gpcm), content=sample(3, n_gpcm, replace=T),
-                        time=round(rlnorm(n_gpcm, 4, .38)), group=sort(sample(n_gpcm/2, n_gpcm, replace=T)))
-  items$'grm' <- cbind(items$'grm', id=seq(n_grm), content=sample(3, n_grm, replace=T),
-                       time=round(rlnorm(n_grm, 4, .38)), group=sort(sample(n_grm/2, n_grm, replace=T)))
+  items$'3pl' <- cbind(items$'3pl', id=seq(n_3pl), content=sample(3, n_3pl, replace=TRUE),
+                       time=round(rlnorm(n_3pl, 4, .38)), group=sort(sample(n_3pl/2, n_3pl, replace=TRUE)))
+  items$'gpcm' <- cbind(items$'gpcm', id=seq(n_gpcm), content=sample(3, n_gpcm, replace=TRUE),
+                        time=round(rlnorm(n_gpcm, 4, .38)), group=sort(sample(n_gpcm/2, n_gpcm, replace=TRUE)))
+  items$'grm' <- cbind(items$'grm', id=seq(n_grm), content=sample(3, n_grm, replace=TRUE),
+                       time=round(rlnorm(n_grm, 4, .38)), group=sort(sample(n_grm/2, n_grm, replace=TRUE)))
   items[names(items) %in% types]
 }
 ```
@@ -83,10 +84,10 @@ item_pool <- function(types=c('3pl', 'gpcm', 'grm'), n_3pl=300, n_gpcm=20, n_grm
 #### Example 1: Assemble linear tests
 
 Assemble 4 non-overlapping forms that should have maximum test
-information function (TIF) in the region \[-1.28, 1.28\] on the scale
-which covers 80% of the population. Each form includes 10 items, with 3,
-3, and 4 items in the content area 1 to 3 respectively. Additionally,
-each form has an average response time of 60 +/- 5 seconds per item.
+information function (TIF) from -1.28 to 1.28 on the scale which covers
+80% of the population. Each form includes 10 items, with 3, 3, and 4
+items in the content area 1 to 3 respectively. Additionally, each form
+has an average response time of 60 +/- 5 seconds per item.
 
 ``` r
 x <- ata(item_pool(), n_forms=4, test_len=10, max_use=1)
@@ -122,9 +123,9 @@ plot(x)
 
 ![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
-To obtain a flatter TIF over the central region of the scale that
-produces more comparable measurement errrors, we give ATA a TIF target
-that is about 60% of the optimum found in the previous solution.
+To obtain a flatter TIF over the same region so that the test produces
+more comparable measurement errors, we give ATA a TIF target that is
+about 60% of the optimum found in the previous solution.
 
 ``` r
 tif_tar <- x$obj_var[1] * .6
@@ -196,11 +197,12 @@ group_by(x$items$'3pl', form) %>%
 #### Example 2: Model item relational constraints
 
 In this example, we demonstrate how to control item relational
-constraints in ATA. First is the item set constraints, which select
-items associated with the same stimulus as a group. Simply give the item
-set grouping variable to the `group` argument in the `ata` function
-would add that constraint to the MIP
-model.
+constraints in ATA. First is the item set constraints, which treats
+items associated with the same stimulus as a group. Setting `ata(...,
+group=)` to the name of the item set grouping variable would add the
+relevant constraints to the MIP model automatically in the ensuing model
+building
+process.
 
 ``` r
 x <- ata(item_pool('3pl', n_3pl=200), n_forms=4, test_len=10, max_use=1, group='group') # generate 200 3PL items
@@ -249,12 +251,12 @@ plot(x)
 
 ![](README_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
-To have a set of common items shared in all forms, use `ata(...,
+To have a set of common items shared across all forms, use `ata(...,
 common_items=)`. To have a set of common items shared between adjacent
-forms, use `ata(...,
-overlap_items)`.
+forms, use `ata(..., overlap_items)`.
 
 ``` r
+# 5 common items among all forms
 x <- ata(item_pool('3pl', n_3pl=200), n_forms=4, test_len=10, max_use=1, common_items=5)
 x <- ata_relative_objective(x, seq(-.68, .68, length.out=3), 'max')
 x <- ata_solve(x, 'lpsolve', 'model', time_limit=30)
@@ -290,7 +292,7 @@ counts[rowSums(counts)==4, ]
     ##   150 1 1 1 1
     ##   158 1 1 1 1
 
-To avoid enemy items in the same pool, use the `ata_item_enemy`
+To avoid enemy items in the same form, use the `ata_item_enemy`
 function.
 
 ``` r
@@ -338,7 +340,7 @@ x <- ata_solve(x, 'lpsolve', 'model', time_limit=30)
     ## optimal solution found, optimum: 3.348 (3.348, 0)
 
 ``` r
-# expect two identical forms, since the best items can be reused
+# expect two identical forms, since the best items are reused
 with(x$items$'3pl', table(id, form))
 ```
 
@@ -350,7 +352,8 @@ with(x$items$'3pl', table(id, form))
     ##   11 1 1
     ##   14 1 1
 
-To force an item to be select or not selected, use the \`\` function.
+To force an item to be select or not selected, use the `ata_item_fix`
+function.
 
 ``` r
 x <- ata(item_pool('3pl', n_3pl=15), n_forms=2, test_len=5, max_use=2)
@@ -385,5 +388,5 @@ with(x$items$'3pl', table(id, form))
 If you encounter a bug, please post a code example that exposes the bug
 on [github](https://github.com/xluo11/Rata/issues). You can post your
 questions and feature requests on
-[github](https://github.com/xluo11/Rata/issues) or to the
+[github](https://github.com/xluo11/Rata/issues) or contact the
 [author](mailto:xluo1986@gmail.com).

@@ -8,6 +8,7 @@
 #' pool$content <- sample(1:3, n_items, replace=TRUE)
 #' pool$time <- round(rlnorm(n_items, log(60), .2))
 #' pool$group <- sort(sample(1:round(n_items/3), n_items, replace=TRUE))
+#' pool <- list('3pl'=pool)
 #'
 #' ## ex. 1: four 10-item forms, maximize b parameter
 #' x <- ata(pool, 4, test_len=10, max_use=1)
@@ -29,8 +30,8 @@
 #' constr <- data.frame(name='content',level=1:3, min=c(3,3,4), max=c(3,3,4), stringsAsFactors=FALSE)
 #' constr <- rbind(constr, c('time', NA, 55*10, 65*10))
 #' x <- ata(pool, 2, test_len=10, max_use=1)
-#' x <- ata_absolute_objective(x, pool$b, target=0*10)
-#' x <- ata_absolute_objective(x, (pool$b-0)^2, target=1*10)
+#' x <- ata_absolute_objective(x, pool$'3pl'$b, target=0*10)
+#' x <- ata_absolute_objective(x, (pool$'3pl'$b-0)^2, target=1*10)
 #' for(i in 1:nrow(constr))
 #'   x <- with(constr, ata_constraint(x, name[i], min[i], max[i], level=level[i]))
 #' x <- ata_solve(x)
@@ -304,7 +305,7 @@ ata_constraint <- function(x, coef, min=NA, max=NA, level=NULL, forms=NULL, coll
     coef <- aggregate(coef, by=list(group=unlist(x$groups)), sum, na.rm=TRUE)[, -1]
   } else if(is.character(coef) && length(coef) == 1) {
     coef <- Map(function(x, g) {
-      if(nrow(x) == 0)
+      if(is.null(x))
         return(numeric(0))
       if(!coef %in% colnames(x))
         return(rep(0, length(unique(g))))

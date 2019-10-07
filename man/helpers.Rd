@@ -19,7 +19,7 @@ ata_glpk(x, time_limit, message, ...)
 
 ata_check_item_pool(pool)
 
-ata_item_set_groups(pool, opts, warn = FALSE)
+ata_item_set_groups(pool, opts)
 
 ata_form_map(n_forms, opts)
 
@@ -49,8 +49,6 @@ ata_lpsolve(x, time_limit, message, ...)
 \item{pool}{the item pool, a list of 3pl, gpcm, and grm items}
 
 \item{opts}{the options, a list}
-
-\item{warn}{\code{TRUE} to print warning messages}
 
 \item{n_forms}{the nubmer of forms to be assembled}
 

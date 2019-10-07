@@ -51,7 +51,6 @@ plot.ata <- function(x, ...){
   n_forms <- nrow(x$form_map)
   items <- ata_extract_items(x)
   info <- sapply(items, function(xx) {
-    xx <- Map(function(xx) if(nrow(xx)==0) NULL else xx, xx)
     xx <- model_mixed_info(opts$theta, xx, D=x$opts$D)
     rowSums(xx, na.rm=TRUE)
   })

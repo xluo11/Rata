@@ -13,6 +13,11 @@ library(Rata)
 # Rata: Automated Test Assembly 
 
 
+<!-- badges: start -->
+[![CRAN status](https://www.r-pkg.org/badges/version/Rata)](https://cran.r-project.org/package=Rata)
+<!-- badges: end -->
+
+
 ## Overview
 
 Rata applies mixed integer programming (MIP) to automatically build test forms for educational and psychological assessment. Rata is designed as a general automated test assembly (ATA) framework, and it can be used to assemble linear tests, support linear-on-the-fly testing (LOFT), prepare item pools for computerized adaptive testing (CAT), and assemble panels in multistage testing (MST). 

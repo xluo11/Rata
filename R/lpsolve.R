@@ -43,7 +43,9 @@ ata_lpsolve <- function(x, time_limit, message, ...) {
   lp.control(lp, verbose=ifelse(message, 'normal', 'neutral'))
   lp.control(lp, ...)
 
+  start_time <- Sys.time()
   code <- solve(lp)
+  solve_time <- Sys.time() - start_time
   status <- switch(as.character(code),
                    '0'="optimal solution found",
                    '1'="the model is sub-optimal",
@@ -64,6 +66,6 @@ ata_lpsolve <- function(x, time_limit, message, ...) {
   if(!code %in% c(0, 1, 9))
     result <- matrix(0, nrow=nrow(result), ncol=ncol(result))
 
-  list(code=code, status=status, optimum=optimum, result=result, obj_vars=obj_vars)
+  list(code=code, status=status, optimum=optimum, result=result, obj_vars=obj_vars, start_time=start_time, solve_time=solve_time)
 }
 

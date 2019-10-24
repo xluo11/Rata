@@ -10,7 +10,7 @@ print.ata <- function(x, ...){
     cat("The ATA problem has been solved.\n")
     cat(x$status, ', optimum: ', round(x$optimum, 3), ' (', paste(round(x$obj_vars, 3), collapse=', '), ')\n', sep='')
 
-    items <- x$items
+    items <- ata_extract_items(x)
     if(is.list(items) && is.null(names(items)))
       items <- ata_results_to_model(items)
     if(is.list(items) && !is.null(names(items)))
@@ -32,6 +32,7 @@ print.ata <- function(x, ...){
 
 
 #' @rdname ata
+#' @importFrom Rirt model_mixed_info
 #' @importFrom stats aggregate
 #' @importFrom reshape2 melt
 #' @import ggplot2

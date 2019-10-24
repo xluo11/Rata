@@ -66,7 +66,9 @@ ata_glpk <- function(x, time_limit, message, ...) {
   for(i in seq_along(opts))
     setMIPParmGLPK(get(names(opts)[i]), opts[[i]])
 
+  start_time <- Sys.time()
   code <- solveMIPGLPK(lp)
+  solve_time <- Sys.time() - start_time
   status <- switch(as.character(code),
                    '0'="optimal solution found",
                    '1'='invalid basis',
@@ -92,5 +94,5 @@ ata_glpk <- function(x, time_limit, message, ...) {
   result <- matrix(mipColsValGLPK(lp)[1:(x$n_lpvar-2)], ncol=x$n_forms, byrow=FALSE)
   obj_vars <- mipColsValGLPK(lp)[x$n_lpvar - 1:0]
 
-  list(code=code, status=status, optimum=optimum, result=result, obj_vars=obj_vars)
+  list(code=code, status=status, optimum=optimum, result=result, obj_vars=obj_vars, start_time=start_time, solve_time=solve_time)
 }

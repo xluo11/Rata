@@ -2,13 +2,13 @@ Package: Rata
 Type: Package
 Title: Automated Test Assembly
 Version: 0.0.2
-Date: 2019-09-25
+Date: 2019-10-22
 Authors@R: c(person("Xiao", "Luo", role=c("aut","cre"), email="xluo1986@gmail.com"))
 Author: Xiao Luo [aut, cre]
 Maintainer: Xiao Luo <xluo1986@gmail.com>
-Description: Automated test assembly of linear and adaptive tests under the mixed 
-    integer programming framework using open source solvers. The full documentation 
-    and tutorials are at <https://github.com/xluo11/Rata>.
+Description: Automated test assembly of linear and adaptive tests using the 
+    mixed-integer programming. The full documentation and tutorials are at 
+    <https://github.com/xluo11/Rata>.
 License: GPL (>= 3)
 Depends:
     R (>= 3.6.0)
@@ -18,7 +18,7 @@ Imports:
     ggplot2,
     glpkAPI,
     lpSolveAPI,
-    Rirt (>= 0.0.2),
+    Rirt,
     reshape2,
     stats
 Suggests:

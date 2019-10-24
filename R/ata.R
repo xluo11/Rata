@@ -467,6 +467,8 @@ ata_solve <- function(x, solver=c('lpsolve', 'glpk'), return_format=c('model', '
   x$status <- rs$status
   x$optimum <- rs$optimum
   x$obj_vars <- rs$obj_vars
+  x$start_time <- rs$start_time
+  x$solve_time <- rs$solve_time
 
   if(all(rs$result == 0)) {
     x$result <- x$items <- NULL

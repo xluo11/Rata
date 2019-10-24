@@ -1,6 +1,12 @@
 
 # Rata: Automated Test Assembly
 
+<!-- badges: start -->
+
+[![CRAN
+status](https://www.r-pkg.org/badges/version/Rata)](https://cran.r-project.org/package=Rata)
+<!-- badges: end -->
+
 ## Overview
 
 Rata applies mixed integer programming (MIP) to automatically build test

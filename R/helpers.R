@@ -120,7 +120,7 @@ ata_get_form_index <- function(x, forms, collapse, internal_index){
 #' @param coef coefficients
 #' @param compensate \code{TRUE} to combine coefficients
 #' @importFrom stats aggregate
-#' @import Rirt
+#' @importFrom Rirt model_mixed_info
 #' @keywords internal
 ata_get_obj_coef <- function(x, coef, compensate){
   if(length(coef) == x$n_items){ # numeric coefficients at the group level
